@@ -19,8 +19,9 @@ try:
 except:
     pass
 
-def generate_prompt(input):
-    INSTRUCTION = f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
+def generate_prompt(input, prompt_template):
+    if prompt_template is None or prompt_template == '' or prompt_template == 'WizardCoder':
+        return f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
 
 
 ### Instruction:
@@ -28,7 +29,13 @@ Create a Python script for this problem:
 {input}
 
 ### Response:"""
-    return INSTRUCTION
+
+    elif prompt_template == 'QA':
+        return f"""Q: {input}
+A: """
+    else:
+        raise Exception(f'Unknown prompt template: {prompt_template}')
+
 
 def get_model(
     load_8bit: bool = False,
@@ -78,6 +85,7 @@ def main():
     parser.add_argument('--num_seqs_per_iter', type=int, default=50, help='')
     parser.add_argument('--greedy_decode', action='store_true', help='')
     parser.add_argument('--overwrite', action='store_true', help='')
+    parser.add_argument('--prompt_template', type=str, default='WizardCoder', help="")
 
     args = parser.parse_args()
 
@@ -103,6 +111,7 @@ def main():
     )
 
     print(f"Loaded {args.model}.")
+    prompt_template = generate_prompt(args.prompt_template)
     for i in tqdm(range(num_samples), ncols=0, total=num_samples):
         output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
@@ -111,7 +120,7 @@ def main():
             continue
 
         prompt = prompts[i].replace('    ', '\t')
-        prompt_batch = [generate_prompt(prompt)]
+        prompt_batch = [generate_prompt(prompt, prompt_template)]
 
         ids_batch = [task_ids[i]]
 
