@@ -3,6 +3,8 @@ import pprint
 import sys
 import os
 import re
+import time
+from datetime import datetime
 from tqdm import tqdm
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
@@ -159,6 +161,7 @@ def main():
                         {'task_id': task_id,
                          'completion': completion_seq,
                          'all_code': all_code,
+                         'datetime': datetime.now().isoformat(timespec='milliseconds'),
                          }
                     )
 
