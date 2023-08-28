@@ -1,5 +1,8 @@
 import sys
 import os
+import time
+from datetime import datetime
+
 import fire
 import torch
 import transformers
@@ -71,6 +74,8 @@ def main(
     input_data_path = "Input.jsonl",
     output_data_path = "Output.jsonl",
 ):
+    t0 = time.time()
+    print(f'start: {datetime.now()}')
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='bigcode/starcoder'"
     )
@@ -102,19 +107,32 @@ def main(
     input_data = jsonlines.open(input_data_path, mode='r')
     output_data = jsonlines.open(output_data_path, mode='w')
 
+    t1 = time.time()
+    print(f'loaded: {datetime.now()}, cost: {"{:.6f}".format(t1 - t0)}s')
+    results = []
     for num, line in enumerate(input_data):
         one_data = line
         id = one_data["idx"]
         instruction = one_data["Instruction"]
-        print(instruction)
+        t2 = time.time()
+        print(f'idx: {id}, time: {datetime.now()}, instruction: {instruction}')
         _output = evaluate(instruction, tokenizer, model)
         final_output = _output[0].split("### Response:")[1].strip()
+        t3 = time.time()
+        print(f'idx: {id}, time: {datetime.now()}, cost: {"{:.6f}".format(t3 - t2)}s')
         new_data = {
             "id": id,
             "instruction": instruction,
             "wizardcoder": final_output
         }
+        results.append(new_data)
         output_data.write(new_data)
+
+    for result in results:
+        id = result["id"]
+        instruction = result["instruction"]
+        output_data = result["wizardcoder"]
+        print(f'idx: {id}, instruction:\n {instruction}\n\n output:\n {output_data}')
 
 
 if __name__ == "__main__":
