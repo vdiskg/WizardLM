@@ -59,7 +59,19 @@ for code_file in tqdm(files, total=len(files)):
                 # print(completion)
                 next_line = completion.index('# Example usage')
                 completion = completion[:next_line].strip()
-            
+            if "[PYTHON]" in completion:
+                def_line = completion.index('[PYTHON]')
+                completion = completion[def_line:].strip()
+                # print(completion)
+                try:
+                    next_line = completion.index('[/PYTHON]')
+                    completion = completion[:next_line].strip()
+                except:
+                    a += 1
+                    print(completion)
+                    print("================\n")
+                # print(completion)
+
             code['completion'] = completion
     
     output += codes 

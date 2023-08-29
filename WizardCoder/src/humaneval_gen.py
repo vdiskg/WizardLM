@@ -23,6 +23,7 @@ except:
 
 def generate_prompt(input, prompt_template):
     if prompt_template is None or prompt_template == '' or prompt_template == 'WizardCoder':
+        # ======== WizardCoder ========
         return f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
 
 
@@ -33,8 +34,23 @@ Create a Python script for this problem:
 ### Response:"""
 
     elif prompt_template == 'QA':
+        # ======== simple QA ========
         return f"""Q: {input}
 A: """
+
+    elif prompt_template == 'CodeLlama':
+        # ======== CodeLlama ========
+        return f"""[INST] Your task is to write a Python function to solve a programming problem.
+The Python code must be between [PYTHON] and [/PYTHON] tags.
+Problem: Write a Python function to get the unique elements of a list.
+[/INST]
+[PYTHON]
+def get_unique_elements(my_list):
+return list(set(my_list))
+[/PYTHON]
+[INST] Problem: {input}
+[/INST]
+"""
     else:
         raise Exception(f'Unknown prompt template: {prompt_template}')
 
