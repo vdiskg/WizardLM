@@ -22,7 +22,7 @@ except:
     pass
 
 def generate_prompt(input, prompt_template):
-    if prompt_template is None or prompt_template == '' or prompt_template == 'WizardCoder':
+    if prompt_template == 'WizardCoder':
         # ======== WizardCoder ========
         return f"""Below is an instruction that describes a task. Write a response that appropriately completes the request.
 
@@ -50,6 +50,7 @@ return list(set(my_list))
 [/PYTHON]
 [INST] Problem: {input}
 [/INST]
+[PYTHON]
 """
     else:
         raise Exception(f'Unknown prompt template: {prompt_template}')
@@ -129,7 +130,12 @@ def main():
     )
 
     print(f"Loaded {args.model}.")
-    prompt_template = args.prompt_template
+    raw_prompt_template: str = args.prompt_template
+    prompt_template = 'WizardCoder'
+    if raw_prompt_template is not None and raw_prompt_template.strip() != '':
+        prompt_template = raw_prompt_template
+    print(f'Using prompt template: {prompt_template}')
+
     for i in tqdm(range(num_samples), ncols=0, total=num_samples):
         output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
@@ -169,7 +175,14 @@ def main():
                 task_id = ids_batch[0]
 
                 for seq_idx, gen_seq in enumerate(gen_seqs):
-                    completion_seq = gen_seq.split("### Response:")[1]
+                    if prompt_template == 'WizardCoder':
+                        completion_seq = gen_seq.split("### Response:")[1]
+                    elif prompt_template == 'QA':
+                        completion_seq = gen_seq.split("A:")[1]
+                    elif prompt_template == 'CodeLlama':
+                        completion_seq = "[PYTHON]" + gen_seq.split("[PYTHON]")[3]
+                    else:
+                        raise Exception(f'Unknown prompt template: {prompt_template}')
                     completion_seq = completion_seq.replace('\t', '    ')
                     all_code = gen_seq.replace('\t', '    ')
 
