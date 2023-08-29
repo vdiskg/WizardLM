@@ -62,6 +62,7 @@ for code_file in tqdm(files, total=len(files)):
             if "[PYTHON]" in completion:
                 def_line = completion.index('[PYTHON]')
                 completion = completion[def_line:].strip()
+                completion = completion.replace('[PYTHON]', '')
                 # print(completion)
                 try:
                     next_line = completion.index('[/PYTHON]')
