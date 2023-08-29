@@ -113,7 +113,7 @@ def main():
     )
 
     print(f"Loaded {args.model}.")
-    prompt_template = generate_prompt(args.prompt_template)
+    prompt_template = args.prompt_template
     for i in tqdm(range(num_samples), ncols=0, total=num_samples):
         output_file = args.output_path + '/{}.jsonl'.format(args.start_index + i)
 
