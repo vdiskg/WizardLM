@@ -20,6 +20,7 @@ To develop our WizardCoder model, we begin by adapting the Evol-Instruct method 
 |  WizardCoder-Python-34B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-Python-34B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  73.2   | 61.2 | [Demo](http://47.103.63.15:50085/) |  <a href="https://ai.meta.com/resources/models-and-libraries/llama-downloads/" target="_blank">Llama2</a>  |
 |  WizardCoder-15B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-15B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  59.8   |50.6 | -- |  <a href="https://huggingface.co/spaces/bigcode/bigcode-model-license-agreement" target="_blank">OpenRAIL-M</a>  |
 |  WizardCoder-Python-13B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-Python-13B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  64.0   | 55.6 | -- |  <a href="https://ai.meta.com/resources/models-and-libraries/llama-downloads/" target="_blank">Llama2</a>  |
+|  WizardCoder-Python-7B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-Python-7B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  55.5   | 51.6 | [Demo](http://47.103.63.15:50088/) |  <a href="https://ai.meta.com/resources/models-and-libraries/llama-downloads/" target="_blank">Llama2</a>  |
 |  WizardCoder-3B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-3B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  34.8   |37.4 | -- |  <a href="https://huggingface.co/spaces/bigcode/bigcode-model-license-agreement" target="_blank">OpenRAIL-M</a>  |
 |  WizardCoder-1B-V1.0  |   🤗 <a href="https://huggingface.co/WizardLM/WizardCoder-1B-V1.0" target="_blank">HF Link</a>   |  📃 <a href="https://arxiv.org/abs/2306.08568" target="_blank">[WizardCoder]</a>  |  23.8   |28.6 | -- |  <a href="https://huggingface.co/spaces/bigcode/bigcode-model-license-agreement" target="_blank">OpenRAIL-M</a>  |
 
@@ -253,6 +254,74 @@ python process_humaneval.py --path ${output_path} --out_path ${output_path}.json
 
 evaluate_functional_correctness ${output_path}.jsonl
 ```
+
+### How to Reproduce the 73.2 Pass@1 on HumanEval with Greedy Decoding?
+
+❗❗❗**This performance is 100% reproducible!**
+
+- Step 1: Setup the environment
+```bash
+conda create -n eval python=3.10
+
+conda activate eval
+
+conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c pytorch
+```
+
+- Step 2: Install the packages
+```
+transformers==4.31.0
+numpy
+fire
+sentencepiece
+deepspeed==0.10.0
+accelerate
+vllm==0.1.4
+pandas
+ray
+pyarrow
+```
+
+- Step 3: Install Human-Eval from OpenAI
+```bash
+git clone https://github.com/openai/human-eval.git
+pip install -e human-eval
+```
+uncomment the execution call in `human-eval/human_eval/execution.py`
+
+- Step 4: Generate Answer
+
+use the code `WizardLM/blob/main/WizardCoder/src/humaneval_gen_vllm.py` to generate answer.
+```bash
+model="WizardLM/WizardCoder-Python-34B-V1.0"
+temp=0.0
+max_len=2048
+pred_num=1
+num_seqs_per_iter=1
+
+output_path=preds/T${temp}_N${pred_num}
+
+mkdir -p ${output_path}
+echo 'Output path: '$output_path
+echo 'Model to eval: '$model
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 python humaneval_gen_vllm.py --model ${model} \
+  --start_index 0 --end_index 164 --temperature ${temp} \
+  --num_seqs_per_iter ${num_seqs_per_iter} --N ${pred_num} --max_len ${max_len} --output_path ${output_path} --num_gpus 4
+```
+
+- Step 5: Get the score
+
+use the code `WizardLM/blob/main/WizardCoder/src/process_humaneval.py` to get the score.
+```bash
+output_path=preds/T0.0_N1
+
+echo 'Output path: '$output_path
+python process_humaneval.py --path ${output_path} --out_path ${output_path}.jsonl --add_prompt
+
+evaluate_functional_correctness ${output_path}.jsonl
+```
+
 
 ### How to Reproduce the 59.8 Pass@1 on HumanEval with Greedy Decoding?
 
