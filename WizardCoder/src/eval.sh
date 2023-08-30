@@ -7,14 +7,18 @@ echo 'Output path: '$output_path
 echo 'Model to eval: '$model
 
 # 164 problems, 21 per GPU if GPU=8
-index=0
+task_count=164
 #gpu_num=8
 gpu_num=1
+
+step=$(awk "BEGIN {print int((${task_count}+${gpu_num}-1)/${gpu_num})}")
+echo "step=${step}"
+
+index=0
 for ((i = 0; i < $gpu_num; i++)); do
-  #start_index=$((i * 21))
-  #end_index=$(((i + 1) * 21))
-  start_index=0
-  end_index=164
+  start_index=$((i * step))
+  end_index=$(((i + 1) * step))
+  echo "i=${i}, start_index=${start_index}, end_index=${end_index}"
 
   gpu=$((i))
   echo 'Running process #' ${i} 'from' $start_index 'to' $end_index 'on GPU' ${gpu}
