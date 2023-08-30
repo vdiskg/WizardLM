@@ -1,5 +1,6 @@
 deepspeed==0.9.2
-transformers==4.32.1
+transformers @ git+https://github.com/huggingface/transformers.git@main
+accelerate==0.21.0
 human-eval @ git+https://github.com/vdiskg/human-eval.git@master
 rouge_score==0.1.2
 openai==0.27.8
