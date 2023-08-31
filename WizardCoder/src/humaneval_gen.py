@@ -69,9 +69,13 @@ def get_model(
     local_rank = int(os.environ.get("LOCAL_RANK", "-1"))
     print(f"local_rank: {local_rank}/{world_size}")
 
+    device_map = "auto"
     if local_rank != -1:
         torch.distributed.init_process_group(backend="nccl", world_size=world_size, rank=local_rank)
         torch.cuda.set_device(local_rank)
+
+        desired_devices = range(world_size)
+        device_map = {i: d for i, d in enumerate(desired_devices)}
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     if device == "cuda":
@@ -79,7 +83,7 @@ def get_model(
             base_model,
             load_in_8bit=load_8bit,
             torch_dtype=torch.float16,
-            device_map="auto",
+            device_map=device_map,
         )
     elif device == "mps":
         model = AutoModelForCausalLM.from_pretrained(
