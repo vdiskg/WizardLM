@@ -11,6 +11,7 @@ gpu_num=4
 start_index=0
 end_index=164
 
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:32
 
 torchrun --nproc_per_node=${gpu_num} humaneval_gen.py --model ${model} --prompt_template ${prompt_template} --world_size ${gpu_num} \
