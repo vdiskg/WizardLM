@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from tqdm import tqdm
 import torch
+import torch.distributed
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 from human_eval.data import write_jsonl, read_problems, stream_jsonl
 
@@ -59,10 +60,17 @@ return list(set(my_list))
 def get_model(
     load_8bit: bool = False,
     base_model: str = "bigcode/starcoder",
+    local_rank: int = -1,
 ):
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='bigcode/starcoder'"
     )
+
+    print(f"local_rank: {local_rank}")
+
+    if local_rank != -1:
+        torch.distributed.init_process_group(backend="nccl", world_size=2, rank=local_rank)
+        torch.cuda.set_device(local_rank)
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     if device == "cuda":
@@ -88,9 +96,9 @@ def get_model(
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
 
-    if device == "cuda" and torch.cuda.device_count() > 1:
+    if local_rank != -1:
         print("Using {} GPUs for DistributedDataParallel".format(torch.cuda.device_count()))
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
 
     return tokenizer, model
 
@@ -110,6 +118,7 @@ def main():
     parser.add_argument('--greedy_decode', action='store_true', help='')
     parser.add_argument('--overwrite', action='store_true', help='')
     parser.add_argument('--prompt_template', type=str, default='WizardCoder', help="")
+    parser.add_argument('--local_rank', default=-1, type=int, help='node rank for distributed training')
 
     args = parser.parse_args()
 
@@ -123,7 +132,7 @@ def main():
     num_samples = len(prompts)
     print("Number of samples: {}".format(num_samples))
 
-    tokenizer, model = get_model(base_model=args.model)
+    tokenizer, model = get_model(base_model=args.model, local_rank=args.local_rank)
     generation_config = GenerationConfig(
         pad_token_id=tokenizer.pad_token_id,
         do_sample=False if args.greedy_decode else True,
