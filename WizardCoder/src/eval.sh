@@ -2,7 +2,7 @@
 
 source /workspace/storage/coder/WizardLM/WizardCoder/src/env.sh
 
-mkdir -p ${output_path}
+mkdir -vp ${output_path}/tasks
 echo 'Output path: '$output_path
 echo 'Model to eval: '$model
 
@@ -26,7 +26,7 @@ for ((i = 0; i < $gpu_num; i++)); do
   (
     CUDA_VISIBLE_DEVICES=$gpu python humaneval_gen.py --model ${model} --prompt_template ${prompt_template} \
       --start_index ${start_index} --end_index ${end_index} --temperature ${temp} \
-      --num_seqs_per_iter ${num_seqs_per_iter} --N ${pred_num} --max_len ${max_len} --output_path ${output_path} --greedy_decode
+      --num_seqs_per_iter ${num_seqs_per_iter} --N ${pred_num} --max_len ${max_len} --output_path ${output_path}/tasks --greedy_decode
   ) &
   if (($index % $gpu_num == 0)); then wait; fi
 done
