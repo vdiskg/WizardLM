@@ -74,8 +74,7 @@ def get_model(
         torch.distributed.init_process_group(backend="nccl", world_size=world_size, rank=local_rank)
         torch.cuda.set_device(local_rank)
 
-        desired_devices = range(world_size)
-        device_map = {i: d for i, d in enumerate(desired_devices)}
+        device_map = None
 
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     if device == "cuda":
@@ -103,6 +102,7 @@ def get_model(
 
     if local_rank != -1:
         print("Using {} GPUs for DistributedDataParallel".format(torch.cuda.device_count()))
+        model.to(device)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
 
     return tokenizer, model
