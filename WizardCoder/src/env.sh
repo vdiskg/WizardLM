@@ -6,8 +6,8 @@ modle_dir="/workspace/temp/model"
 #model_name="CodeLlama-7b-Instruct-hf"
 model_name="starcoder"
 
-#prompt_template=""
-prompt_template="CodeLlama"
+prompt_template="WizardCoder"
+#prompt_template="CodeLlama"
 
 model="${modle_dir}/${model_name}"
 temp=0.0
