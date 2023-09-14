@@ -60,12 +60,12 @@ return list(set(my_list))
 def get_model(
     load_8bit: bool = False,
     base_model: str = "bigcode/starcoder",
+    local_rank: int = -1,
 ):
     assert base_model, (
         "Please specify a --base_model, e.g. --base_model='bigcode/starcoder'"
     )
 
-    local_rank = int(os.environ.get("LOCAL_RANK", "-1"))
     print(f"local_rank: {local_rank}")
 
     if local_rank != -1:
@@ -118,6 +118,7 @@ def main():
     parser.add_argument('--greedy_decode', action='store_true', help='')
     parser.add_argument('--overwrite', action='store_true', help='')
     parser.add_argument('--prompt_template', type=str, default='WizardCoder', help="")
+    parser.add_argument('--local_rank', default=-1, type=int, help='node rank for distributed training')
 
     args = parser.parse_args()
 
@@ -131,7 +132,7 @@ def main():
     num_samples = len(prompts)
     print("Number of samples: {}".format(num_samples))
 
-    tokenizer, model = get_model(base_model=args.model)
+    tokenizer, model = get_model(base_model=args.model, local_rank=args.local_rank)
     generation_config = GenerationConfig(
         pad_token_id=tokenizer.pad_token_id,
         do_sample=False if args.greedy_decode else True,
