@@ -84,11 +84,6 @@ def get_model(
         model.half()  # seems to fix bugs for some users.
 
     model.eval()
-
-    if device == "cuda" and torch.cuda.device_count() > 1:
-        print("Using {} GPUs for DataParallel".format(torch.cuda.device_count()))
-        model = torch.nn.DataParallel(model)
-
     if torch.__version__ >= "2" and sys.platform != "win32":
         model = torch.compile(model)
     
